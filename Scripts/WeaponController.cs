@@ -7,13 +7,13 @@ public class WeaponController : MonoBehaviour
 {
     public Light2D _pointLight;
     public float _toAdd;
+
     [Range(0,360f)]
     public float _minAngle, _maxAngle;
-    public float _rotationSpeed = 1;
 
     Camera _camera;
-    public Vector3 _orientation;
-    public Vector3 _direction;
+    Vector3 _orientation;
+    Vector3 _direction;
     public Transform _parent;
     float _lightAngleRange = 120f;
 
@@ -25,6 +25,8 @@ public class WeaponController : MonoBehaviour
     public int _pelletNumber=3;
 
     float _spreadAngle;
+    bool _canShoot = false;
+
     void Start()
     {
         _camera = Camera.main;
@@ -56,20 +58,29 @@ public class WeaponController : MonoBehaviour
             transform.eulerAngles = new Vector3(0, 0, Mathf.Clamp(tempAngle, - _lightAngleRange / 2, _lightAngleRange / 2));
         }
 
-        if (Input.GetKey(KeyCode.Mouse0))
+        if (Input.GetKey(KeyCode.Mouse1))
         {
+            _canShoot = true;
             _pointLight.pointLightInnerAngle = Mathf.Clamp(_pointLight.pointLightInnerAngle -=_toAdd, _minAngle, _maxAngle);
             _pointLight.pointLightOuterAngle = Mathf.Clamp(_pointLight.pointLightOuterAngle -=_toAdd, _minAngle + 10, _maxAngle);
-        }
-        else if(_pointLight.pointLightInnerAngle != _maxAngle) 
-        {
             _spreadAngle = _pointLight.pointLightInnerAngle;
-            _pointLight.pointLightInnerAngle =  _maxAngle;
-            _pointLight.pointLightOuterAngle =  _maxAngle;
         }
-        if (Input.GetKeyUp(KeyCode.Mouse0))
+        else
+        {
+            _pointLight.pointLightInnerAngle = Mathf.Clamp(_pointLight.pointLightInnerAngle += _toAdd/3f, _minAngle, _maxAngle);
+            _pointLight.pointLightOuterAngle = Mathf.Clamp(_pointLight.pointLightOuterAngle += _toAdd/3f, _minAngle + 10, _maxAngle);
+            _spreadAngle = _pointLight.pointLightInnerAngle;
+            if(_pointLight.pointLightInnerAngle == _maxAngle)
+            {
+                _canShoot = false;
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.Mouse0) && _canShoot)
         {
             StartCoroutine(ShootWithSpread(_spreadAngle, _pelletNumber, transform.rotation, _spawner.position));
+            _canShoot = false;
+            _pointLight.pointLightOuterAngle = _maxAngle;
+            _pointLight.pointLightOuterAngle = _maxAngle;
         }
     }
     private void OnValidate()
@@ -81,19 +92,14 @@ public class WeaponController : MonoBehaviour
 
     IEnumerator ShootWithSpread(float spreadAngle, int numberOfPellets, Quaternion transformRotation, Vector3 spawnerPosition)
     {
-        //Debug.Log(spreadAngle);
         for(int i = 0; i < numberOfPellets; i++)
         {
             GameObject pellet = Instantiate(_projectile, spawnerPosition, transformRotation);
-            //if (GameState._isCharacterFlipped == false)
-            //{
-               // Debug.Log(transform.rotation.eulerAngles.z);
-                pellet.transform.rotation = Quaternion.Euler(new Vector3(0, 0, transformRotation.eulerAngles.z + Random.Range(-spreadAngle, spreadAngle)));
-                //Debug.Log(pellet.transform.rotation.eulerAngles.z);
-            //}
+            pellet.transform.rotation = Quaternion.Euler(new Vector3(0, 0, transformRotation.eulerAngles.z + Random.Range(-spreadAngle, spreadAngle)));
             pellet.GetComponent<Rigidbody2D>().AddForce(pellet.transform.right * _firePower);
             Destroy(pellet, 2f);
             yield return new WaitForEndOfFrame();
+            yield return new WaitForSeconds(.01f);
 
         }
     }
