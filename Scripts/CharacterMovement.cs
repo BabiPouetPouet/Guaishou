@@ -19,16 +19,16 @@ public class CharacterMovement : MonoBehaviour
         GetInput();
         if (_upPressed)
         {
-            Debug.Log("Je monte");
+
         }
     }
 
     private void FixedUpdate()
     {
-        if(GameState._isCharacterFlipped == false)
+        //if(GameState._isCharacterFlipped == false)
             _rb.AddForce(transform.right * _horizontalInput * Time.fixedDeltaTime * _force);
-        else
-            _rb.AddForce(transform.right * _horizontalInput * Time.fixedDeltaTime * -_force);
+        //else
+          //  _rb.AddForce(transform.right * _horizontalInput * Time.fixedDeltaTime * -_force);
     }
 
 
